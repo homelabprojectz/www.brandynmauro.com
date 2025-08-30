@@ -1,0 +1,63 @@
+name: Build and deploy brandynmauro.com
+
+# Trigger on push or manually
+on:
+    # push: - Uncommented to avoiud automatic deploys 
+    workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true  # Was used to Fetch Hugo themes (true OR recursive)
+          fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+     
+      - name: Install npm
+        run: npm install 
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.17.0'
+      - run: go version
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: '0.147.2'
+          extended: true
+      
+      - name: Set working directory
+        run: cd ~/actions-runner/_work/brandynmauro.com/brandynmauro.com
+
+      - name: Update Hugo baseURL for non-main branches
+        if: github.ref != 'refs/heads/main'
+        run: |
+          sed -i 's|^baseURL = "https://www.brandynmauro.com"|baseURL = "https://dev.brandynmauro.com"|' hugo.toml
+
+      - name: Build Site
+        run: hugo --minify --buildDrafts=true
+
+      - name: List directory structure for troubleshooting reference
+        run: pwd && ls -ltR
+        
+      # For non-main branches (e.g., dev, feature) - deploy to dev environment on private network
+      - name: Deploy to dev environment
+        if: github.ref != 'refs/heads/main'
+        run: |
+          rsync -Larvz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+            ~/actions-runner/_work/brandynmauro.com/brandynmauro.com/public/ --progress . \
+            ${{ secrets.RSYNC_USER }}@${{ secrets.PUBLICSITE_IP }}:/src/dev
+
+      # For main branch (production) - commented out for now as the production site is being hosted in cloudflare
+      # - name: Deploy to production environment
+      #   if: github.ref == 'refs/heads/main'
+      #   run: |
+      #     rsync -Larvz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+      #       ~/actions-runner/_work/brandynmauro.com/brandynmauro.com/public/ --progress . \
+      #       ${{ secrets.RSYNC_USER }}@${{ secrets.PUBLICSITE_IP }}:/src/prod
