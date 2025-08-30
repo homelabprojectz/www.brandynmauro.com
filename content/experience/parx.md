@@ -1,8 +1,8 @@
 ---
 date: '2024-12-04T19:52:54-05:00' # date in which the content is created - defaults to "today"
-title: 'Systems Administrator'
+title: 'IT Operations Supervisor'
 draft: false # set to "true" if you want to hide the content 
-jobTitle: "Systems Administrator" # job description/title. Fill-in
+jobTitle: "IT Operations Supervisor" # job description/title. Fill-in
 company: "Parx Casino" # name of the company you worked for. Fill-in
 location: "Bensalem, PA" # place/city/country for the experience. Fill-in.
 duration: "2022-Present" # from-to, for example "2022-2024". Fill-in.
